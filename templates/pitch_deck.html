@@ -1,0 +1,26 @@
+
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Pitch Deck</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; }
+                        .slide { margin: 20px; padding: 20px; border: 1px solid #ccc; }
+                        .slide-title { font-size: 24px; margin-bottom: 15px; }
+                        .slide-content { font-size: 16px; }
+                    </style>
+                </head>
+                <body>
+                    {% for slide_type, content in slides.items() %}
+                    <div class="slide">
+                        <div class="slide-title">{{ slide_type }}</div>
+                        <div class="slide-content">
+                            {% for key, value in content.items() %}
+                            <p><strong>{{ key }}:</strong> {{ value }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </body>
+                </html>
+                
