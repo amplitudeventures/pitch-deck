@@ -12,40 +12,88 @@ st.set_page_config(
 # Add custom CSS right after page config
 st.markdown("""
     <style>
-    /* Basic dark theme */
-    .stApp {
-        background-color: #0e1117;
+    /* Force dark theme everywhere */
+    .stApp, 
+    [data-testid="stAppViewContainer"],
+    [data-testid="stHeader"],
+    [data-testid="stToolbar"],
+    [data-testid="stWidgetLabel"],
+    [data-testid="stMarkdownContainer"],
+    .streamlit-expanderHeader,
+    .stSelectbox > div[data-baseweb="select"] > div,
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="popover"] > div,
+    .stTextInput > div > div,
+    .stTextArea > div > div,
+    .stSlider > div > div,
+    .stFileUploader > div > div {
+        background-color: #0e1117 !important;
+        color: #fafafa !important;
     }
     
-    /* Text visibility */
-    .stMarkdown, p, span, div, label {
-        color: #fafafa;
-    }
-    
-    /* Remove white boxes */
-    .element-container {
-        background-color: transparent;
-        padding: 0;
-        margin: 0;
-    }
-    
-    /* Clean up sidebar */
+    /* Sidebar specific styling */
     section[data-testid="stSidebar"] {
-        background-color: #262730;
+        background-color: #262730 !important;
+        border-right: 1px solid #555 !important;
     }
     
-    /* Keep buttons visible */
+    /* Input fields dark styling */
+    input, 
+    textarea,
+    [data-testid="stTextInput"] input,
+    [data-testid="stTextArea"] textarea,
+    [data-testid="stDateInput"] input,
+    .stSelectbox select,
+    div[data-baseweb="select"] input {
+        background-color: #262730 !important;
+        color: #fafafa !important;
+        border-color: #555 !important;
+    }
+    
+    /* Dropdown menu dark styling */
+    div[data-baseweb="popover"] {
+        background-color: #262730 !important;
+        border-color: #555 !important;
+    }
+    
+    /* Button styling */
     .stButton button {
         width: 100%;
         margin: 0.5rem 0;
-        background-color: #0066cc;
-        color: white;
+        background-color: #0066cc !important;
+        color: white !important;
+        border: none !important;
     }
     
-    /* Remove white backgrounds from expanders */
-    .stExpander {
-        background-color: transparent;
-        border: none;
+    /* Expander styling */
+    .streamlit-expanderHeader {
+        border-color: #555 !important;
+    }
+    
+    /* Success/Info/Error message styling */
+    .stSuccess, 
+    .stInfo, 
+    .stWarning, 
+    .stError {
+        background-color: #262730 !important;
+        color: #fafafa !important;
+        border: 1px solid #555 !important;
+    }
+    
+    /* Code blocks */
+    .stCodeBlock {
+        background-color: #262730 !important;
+    }
+    
+    /* Table styling */
+    .stTable {
+        background-color: #262730 !important;
+        color: #fafafa !important;
+    }
+    
+    /* Ensure all text is visible */
+    p, span, div, h1, h2, h3, h4, h5, h6, li, label {
+        color: #fafafa !important;
     }
     </style>
 """, unsafe_allow_html=True)
