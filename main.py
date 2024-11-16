@@ -1240,7 +1240,7 @@ def main():
 
     if 'current_project_id' not in st.session_state or not st.session_state.current_project_id:
         st.title("Welcome to Pitch Deck Generator")
-        project_name = st.text_input("Enter your project name:")
+        project_name = st.text_input("Enter your project name  FYI:")
         if project_name:
             st.session_state.current_project_id = str(uuid.uuid4())
             st.session_state.project_name = project_name
