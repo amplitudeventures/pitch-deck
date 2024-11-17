@@ -23,93 +23,106 @@ st.set_page_config(
 )
 
 # Add custom CSS right after page config
-# st.markdown("""
-#     <style>
-#     /* Force dark theme everywhere */
-#     .stApp,
-#     [data-testid="stAppViewContainer"],
-#     [data-testid="stHeader"],
-#     [data-testid="stToolbar"],
-#     [data-testid="stWidgetLabel"],
-#     [data-testid="stMarkdownContainer"],
-#     .streamlit-expanderHeader,
-#     .stSelectbox > div[data-baseweb="select"] > div,
-#     div[data-baseweb="select"] > div,
-#     div[data-baseweb="popover"] > div,
-#     .stTextInput > div > div,
-#     .stTextArea > div > div,
-#     .stSlider > div > div,
-#     .stFileUploader > div > div {
-#         background-color: #0e1117 !important;
-#         color: #fafafa !important;
-#     }
-#
-#     /* Sidebar specific styling */
-#     section[data-testid="stSidebar"] {
-#         background-color: #262730 !important;
-#         border-right: 1px solid #555 !important;
-#     }
-#
-#     /* Input fields dark styling */
-#     input,
-#     textarea,
-#     [data-testid="stTextInput"] input,
-#     [data-testid="stTextArea"] textarea,
-#     [data-testid="stDateInput"] input,
-#     .stSelectbox select,
-#     div[data-baseweb="select"] input {
-#         background-color: #262730 !important;
-#         color: #fafafa !important;
-#         border-color: #555 !important;
-#     }
-#
-#     /* Dropdown menu dark styling */
-#     div[data-baseweb="popover"] {
-#         background-color: #262730 !important;
-#         border-color: #555 !important;
-#     }
-#
-#     /* Button styling */
-#     .stButton button {
-#         width: 100%;
-#         margin: 0.5rem 0;
-#         background-color: #0066cc !important;
-#         color: white !important;
-#         border: none !important;
-#     }
-#
-#     /* Expander styling */
-#     .streamlit-expanderHeader {
-#         border-color: #555 !important;
-#     }
-#
-#     /* Success/Info/Error message styling */
-#     .stSuccess,
-#     .stInfo,
-#     .stWarning,
-#     .stError {
-#         background-color: #262730 !important;
-#         color: #fafafa !important;
-#         border: 1px solid #555 !important;
-#     }
-#
-#     /* Code blocks */
-#     .stCodeBlock {
-#         background-color: #262730 !important;
-#     }
-#
-#     /* Table styling */
-#     .stTable {
-#         background-color: #262730 !important;
-#         color: #fafafa !important;
-#     }
-#
-#     /* Ensure all text is visible */
-#     p, span, div, h1, h2, h3, h4, h5, h6, li, label {
-#         color: #fafafa !important;
-#     }
-#     </style>
-# """, unsafe_allow_html=True)
+st.markdown("""
+    <style>
+    /* General app styling */
+    .stApp {
+        background-color: #1e1e1e !important;
+        color: #e0e0e0 !important;
+    }
+
+    /* Sidebar styling */
+    section[data-testid="stSidebar"] {
+        background-color: #2e2e2e !important;
+        border-right: 1px solid #444 !important;
+    }
+
+    /* Header styling */
+    header {
+        background-color: #1e1e1e !important;
+        color: #e0e0e0 !important;
+    }
+
+    /* Input fields styling */
+    input, textarea, select, .stTextInput > div > div, .stTextArea > div > div, .stSelectbox > div > div {
+        background-color: #3e3e3e !important;
+        color: #e0e0e0 !important;
+        border-color: #555 !important;
+    }
+
+    /* Dropdown menu styling */
+    .stSelectbox div[data-baseweb="select"] {
+        background-color: #3e3e3e !important;
+    }
+    .stSelectbox div[data-baseweb="select"] > div {
+        background-color: #3e3e3e !important;
+    }
+    .stSelectbox div[data-baseweb="select"] .css-1wa3eu0-placeholder {
+        color: red !important;
+    }
+    .stSelectbox div[data-baseweb="select"] .css-1uccc91-singleValue {
+        color: red !important;
+    }
+
+    /* Force dropdown options to have a dark background and red text */
+    .stSelectbox div[data-baseweb="select"] .css-1n7v3ny-option {
+        background-color: #3e3e3e !important;
+        color: red !important;
+    }
+    .stSelectbox div[data-baseweb="select"] .css-1n7v3ny-option:hover {
+        background-color: #555 !important;
+    }
+
+    /* Dropdown menu panel */
+    .stSelectbox div[data-baseweb="select"] .css-1pahdxg-control {
+        background-color: #3e3e3e !important;
+        color: red !important;
+    }
+
+    /* Additional targeting for dropdown text */
+    .stSelectbox div[data-baseweb="select"] .css-1okebmr-indicatorContainer {
+        color: red !important;
+    }
+    .stSelectbox div[data-baseweb="select"] .css-1hb7zxy-IndicatorsContainer {
+        color: red !important;
+    }
+
+    /* Button styling */
+    .stButton button {
+        background-color: #007acc !important;
+        color: white !important;
+        border: none !important;
+    }
+
+    /* Expander styling */
+    .streamlit-expanderHeader {
+        border-color: #555 !important;
+    }
+
+    /* Success/Info/Error message styling */
+    .stSuccess, .stInfo, .stWarning, .stError {
+        background-color: #3e3e3e !important;
+        color: #e0e0e0 !important;
+        border: 1px solid #555 !important;
+    }
+
+    /* Code blocks */
+    .stCodeBlock {
+        background-color: #2e2e2e !important;
+    }
+
+    /* Table styling */
+    .stTable {
+        background-color: #2e2e2e !important;
+        color: #e0e0e0 !important;
+    }
+
+    /* Ensure all text is visible */
+    p, span, div, h1, h2, h3, h4, h5, h6, li, label {
+        color: #e0e0e0 !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # Rest of your imports and code...
 
@@ -1026,7 +1039,13 @@ def handle_export_tab():
 
 def load_css():
     st.markdown("""
+    <style>
+        /* Apply red color to all text elements */
+          div   {
+            color: red !important;
+        }
         
+    </style>
     """, unsafe_allow_html=True)
 
 
@@ -1445,7 +1464,6 @@ def handle_documents_tab():
         if st.button("Upload More Documents"):
             st.session_state.upload_state['processing_complete'] = False
             st.rerun()
-
 
 
 
