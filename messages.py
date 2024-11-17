@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional
 
-PHASE_NAMES = [
+# English phase names
+PHASE_NAMES_ENGLISH = [
     "Phase 0: Document Analysis",
     "Phase 1: Slide Planning",
     "Phase 2: Content Generation",
@@ -10,7 +11,19 @@ PHASE_NAMES = [
     "Phase 6: Canva Export"
 ]
 
-PHASE_CONFIGS = {
+# Norwegian phase names
+PHASE_NAMES_NORWEGIAN = [
+    "Fase 0: Dokumentanalyse",
+    "Fase 1: Lysbildeplanlegging",
+    "Fase 2: Innholdsgenerering",
+    "Fase 3: Språkbehandling",
+    "Fase 4: HTML-forhåndsvisning",
+    "Fase 5: PDF-generering",
+    "Fase 6: Canva-eksport"
+]
+
+# English phase configurations
+PHASE_CONFIGS_ENGLISH = {
     "Phase 0: Document Analysis": {
         "assistant_id": "asst_uCXB3ZuddxaZZeEqPh8LZ5Zf",
         "description": "Analyzes uploaded documents to understand company information",
@@ -54,6 +67,54 @@ PHASE_CONFIGS = {
         "output_format": "canva"
     }
 }
+
+# Norwegian phase configurations
+PHASE_CONFIGS_NORWEGIAN = {
+    "Fase 0: Dokumentanalyse": {
+        "assistant_id": "asst_uCXB3ZuddxaZZeEqPh8LZ5Zf",
+        "description": "Analyserer opplastede dokumenter for å forstå selskapsinformasjon",
+        "requires_previous": False,
+        "output_format": "report"
+    },
+    "Fase 1: Lysbildeplanlegging": {
+        "assistant_id": "asst_uCXB3ZuddxaZZeEqPh8LZ5Zf",
+        "description": "Planlegger lysbildestruktur og innholdsdistribusjon",
+        "requires_previous": True,
+        "output_format": "json"
+    },
+    "Fase 2: Innholdsgenerering": {
+        "assistant_id": "asst_uCXB3ZuddxaZZeEqPh8LZ5Zf",
+        "description": "Genererer innhold for hvert lysbilde basert på analyse",
+        "requires_previous": True,
+        "output_format": "slides"
+    },
+    "Fase 3: Språkbehandling": {
+        "assistant_id": "asst_uCXB3ZuddxaZZeEqPh8LZ5Zf",
+        "description": "Håndterer oversettelse og språkopptimalisering",
+        "requires_previous": True,
+        "output_format": "slides"
+    },
+    "Fase 4: HTML-forhåndsvisning": {
+        "assistant_id": "asst_uCXB3ZuddxaZZeEqPh8LZ5Zf",
+        "description": "Genererer interaktiv HTML-forhåndsvisning av lysbilder",
+        "requires_previous": True,
+        "output_format": "html"
+    },
+    "Fase 5: PDF-generering": {
+        "assistant_id": "asst_uCXB3ZuddxaZZeEqPh8LZ5Zf",
+        "description": "Oppretter PDF-versjon av presentasjonen",
+        "requires_previous": True,
+        "output_format": "pdf"
+    },
+    "Fase 6: Canva-eksport": {
+        "assistant_id": "asst_uCXB3ZuddxaZZeEqPh8LZ5Zf",
+        "description": "Forbereder og eksporterer innhold til Canva",
+        "requires_previous": True,
+        "output_format": "canva"
+    }
+}
+
+# English slide types
 
 SLIDE_TYPES_ENGLISH = {
     "title": {
@@ -328,6 +389,8 @@ SLIDE_TYPES_NORWEGIAN = {
     }
 }
 
+
+# Language configurations
 LANGUAGE_CONFIGS = {
     "no": {
         "name": "Norwegian",
@@ -345,7 +408,47 @@ LANGUAGE_CONFIGS = {
     }
 }
 
-# Editing configurations
+# Function to get phase names based on language
+def get_phase_names(language: str) -> List[str]:
+    if language == "no":
+        return PHASE_NAMES_NORWEGIAN
+    return PHASE_NAMES_ENGLISH
+
+# Function to get phase configurations based on language
+def get_phase_configs(language: str) -> Dict[str, Dict]:
+    if language == "no":
+        return PHASE_CONFIGS_NORWEGIAN
+    return PHASE_CONFIGS_ENGLISH
+
+# Function to get slide template based on language
+def get_slide_template(slide_type: str, language: str) -> Optional[Dict]:
+    if language == "no":
+        base_template = SLIDE_TYPES_NORWEGIAN.get(slide_type)
+    else:
+        base_template = SLIDE_TYPES_ENGLISH.get(slide_type)
+    
+    if not base_template:
+        return None
+
+    lang_config = LANGUAGE_CONFIGS.get(language, LANGUAGE_CONFIGS['en'])
+    template = base_template.copy()
+    template['language'] = lang_config
+    template['original_language'] = language
+    return template
+
+# Function to get phase configuration based on language
+def get_phase_config(phase_name: str, language: str = "en") -> Optional[Dict]:
+    phase_configs = get_phase_configs(language)
+    return phase_configs.get(phase_name)
+
+# Function to get system message based on language
+def get_system_message(message_type: str, language: str = "en", **kwargs) -> str:
+    message_template = SYSTEM_MESSAGES.get(message_type, {}).get(language)
+    if not message_template:
+        message_template = SYSTEM_MESSAGES.get(message_type, {}).get('en', "")
+    return message_template.format(**kwargs)
+
+
 EDITING_MODES = {
     "structured": {
         "name": "Structured Feedback",
@@ -359,7 +462,7 @@ EDITING_MODES = {
     }
 }
 
-# HTML/PDF Export configurations
+
 EXPORT_CONFIGS = {
     "html": {
         "template_path": "templates/pitch_deck.html",
@@ -374,147 +477,3 @@ EXPORT_CONFIGS = {
         "margin": {"top": 20, "right": 20, "bottom": 20, "left": 20}
     }
 }
-
-# System messages for the OpenAI assistant
-SYSTEM_MESSAGES = {
-    "document_analysis": """You are analyzing company documents for pitch deck creation.
-Focus on extracting key information about: company overview, problem statement, solution,
-market size, business model, team, and financials. Use the following format:
-ANALYSIS_START
-{analysis_content}
-ANALYSIS_END""",
-    
-    "slide_generation": """You are generating content for a pitch deck slide.
-Follow these guidelines:
-1. Structure:
-   - Use ### for slide titles with numbers (e.g., ### 1. Title Slide)
-   - Use bullet points with bold headers (e.g., - **Header**: Content)
-   - Include source references in 【】format
-
-2. Content Requirements:
-   - Clear, concise language
-   - Focus on key messages
-   - Maintain consistent tone
-   - Include metrics and data where relevant
-   - Add source references for key claims
-
-3. Format Example:
-   ### [Number]. [Slide Title]
-   - **[Header]**: [Content]【source】
-   - **[Metric]**: [Value]【source】
-   Additional context or details...
-
-4. Source References:
-   - Use 【X:Y】format for citations
-   - Include page/section numbers
-   - Link to specific documents
-
-5. Special Elements:
-   - Bold text for emphasis
-   - Metrics in clear format
-   - Bullet points for readability
-   - Citations for credibility
-
-Format your response as:
-SLIDE_START
-[Your structured content following above format]
-SLIDE_END""",
-    
-    # Add a new message type for rich content parsing
-    "content_structure": {
-        "slide_title": {
-            "format": "### NUMBER. TITLE",
-            "required": True
-        },
-        "bullet_points": {
-            "format": "- **Header**: Content",
-            "required": True
-        },
-        "references": {
-            "format": "【source:page】",
-            "required": False
-        },
-        "metrics": {
-            "format": "NUMBER UNIT",
-            "required": False
-        }
-    }
-}
-
-# Add content structure validation
-def validate_slide_content(content: str) -> bool:
-    """Validate if content follows required structure"""
-    # Has title
-    if not content.strip().startswith('###'):
-        return False
-    
-    # Has bullet points
-    if '- **' not in content:
-        return False
-        
-    # Has at least one reference
-    if '【' not in content or '】' not in content:
-        return False
-        
-    return True
-
-# Import from application writer's system prompts
-TECHNICAL_CONSTRAINTS = """OPERATIONAL CONSTRAINTS:
-1. Document Access:
-   - READ-ONLY access to Pinecone documents
-   - Can RETRIEVE and ANALYZE documents
-   - CANNOT write or modify stored data
-   - CANNOT create new document entries
-
-2. Output Requirements:
-   - Begin responses with "ANALYSIS_START"
-   - End responses with "ANALYSIS_COMPLETE"
-   - Follow format: {current_phase} > {analysis} > {recommendations}
-   - Report errors as "ERROR: <message>"
-
-3. Analysis Requirements:
-   - Verify document completeness before analysis
-   - Check data quality and report gaps
-   - Apply pitch deck best practices consistently
-   - Document all assumptions made
-
-4. Response Format:
-   - Use markdown for structure
-   - Include timestamps for analysis steps
-   - Tag uncertainties with confidence levels
-   - Cite specific document references"""
-
-def get_slide_template(slide_type: str, language: str) -> Optional[Dict]:
-    """Get template for specific slide type in specified language"""
-    # Validate inputs
-    if not slide_type or not language:
-        return None
-        
-    base_template = SLIDE_TYPES_ENGLISH.get(slide_type)
-    if not base_template:
-        return None
-        
-    lang_config = LANGUAGE_CONFIGS.get(language)
-    if not lang_config:
-        # Fall back to English if language not supported
-        lang_config = LANGUAGE_CONFIGS.get('en')
-        if not lang_config:
-            return base_template
-        
-
-    # Merge language-specific configurations
-    template = base_template.copy()
-    template['language'] = lang_config
-    template['original_language'] = language
-    return template
-
-def get_phase_config(phase_name: str) -> Optional[Dict]:
-    """Get configuration for specific phase"""
-    return PHASE_CONFIGS.get(phase_name)
-
-def get_system_message(message_type: str, **kwargs) -> str:
-    """Get formatted system message for specific use case"""
-    message_template = SYSTEM_MESSAGES.get(message_type)
-    if not message_template:
-        return ""
-    return message_template.format(**kwargs)

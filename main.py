@@ -14,10 +14,28 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
 
-# Must be the first Streamlit command
+# Initialize the current language in session state if not already set
+if 'current_language' not in st.session_state:
+    st.session_state.current_language = 'no'  # Default to Norwegian
+
+# Access the current language from session state
+current_language = st.session_state.current_language
+
+# Define language-specific page titles and icons
+page_titles = {
+    "en": "Pitch Deck Generator",
+    "no": "Presentasjonsgenerator"
+}
+
+page_icons = {
+    "en": "📊",
+    "no": "📈"  # You can choose a different icon for Norwegian if desired
+}
+
+# Set the page configuration with language support
 st.set_page_config(
-    page_title="Pitch Deck Generator",
-    page_icon="📊",
+    page_title=page_titles[current_language],
+    page_icon=page_icons[current_language],
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -147,8 +165,10 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 import io
 from openai import OpenAI
 import json
-from messages import (PHASE_NAMES, PHASE_CONFIGS, SLIDE_TYPES_ENGLISH, SLIDE_TYPES_NORWEGIAN,
-                      LANGUAGE_CONFIGS, EDITING_MODES, EXPORT_CONFIGS)
+from messages import (
+    PHASE_NAMES_ENGLISH, PHASE_NAMES_NORWEGIAN, PHASE_CONFIGS_ENGLISH, PHASE_CONFIGS_NORWEGIAN,EDITING_MODES, EXPORT_CONFIGS,
+    SLIDE_TYPES_ENGLISH, SLIDE_TYPES_NORWEGIAN, LANGUAGE_CONFIGS, get_phase_names
+)
 import jinja2
 
 import sys
@@ -565,10 +585,11 @@ class PitchDeckGenerator:
                 st.sidebar.markdown("### Progress")
                 progress = st.sidebar.progress(0)
                 current_phase = self.current_phase
-                total_phases = len(PHASE_NAMES)
+                total_phases = len(get_phase_names(self.current_language))
                 progress.progress(current_phase / total_phases)
 
-                st.sidebar.markdown(f"**Current Phase:** {PHASE_NAMES[current_phase]}")
+                phase_names = get_phase_names(self.current_language)
+                st.sidebar.markdown(f"**Current Phase:** {phase_names[current_phase]}")
 
             # Console output
             self.display_console()
@@ -755,10 +776,60 @@ Session State Keys: {list(st.session_state.keys())}
 
 def handle_preview_tab():
     """Handle Preview tab content"""
-    st.header("Preview Pitch Deck")
+
+    # Access the current language from session state
+    current_language = st.session_state.current_language
+
+    # Define language-specific text
+    header_text = {
+        "en": "Preview Pitch Deck",
+        "no": "Forhåndsvisning av presentasjon"
+    }
+
+    no_slides_text = {
+        "en": "No slides to preview yet. Create some slides first!",
+        "no": "Ingen lysbilder å forhåndsvise ennå. Lag noen lysbilder først!"
+    }
+
+    export_pdf_button = {
+        "en": "Export as PDF",
+        "no": "Eksporter som PDF"
+    }
+
+    download_pdf_button = {
+        "en": "Download PDF",
+        "no": "Last ned PDF"
+    }
+
+    export_html_button = {
+        "en": "Export as HTML",
+        "no": "Eksporter som HTML"
+    }
+
+    download_html_button = {
+        "en": "Download HTML",
+        "no": "Last ned HTML"
+    }
+
+    export_google_slides_button = {
+        "en": "Export to Google Slides",
+        "no": "Eksporter til Google Slides"
+    }
+
+    export_success_text = {
+        "en": "Pitch deck exported to Google Slides successfully!",
+        "no": "Presentasjonen ble eksportert til Google Slides!"
+    }
+
+    html_download_success_text = {
+        "en": "HTML file downloaded successfully!",
+        "no": "HTML-filen ble lastet ned!"
+    }
+
+    st.header(header_text[current_language])
 
     if not st.session_state.project_state.slides:
-        st.info("No slides to preview yet. Create some slides first!")
+        st.info(no_slides_text[current_language])
         return
 
     try:
@@ -866,31 +937,31 @@ def handle_preview_tab():
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            if st.button("Export as PDF"):
+            if st.button(export_pdf_button[current_language]):
                 pdf_buffer = generate_pdf_from_text(st.session_state.project_state.slides)
                 st.download_button(
-                    "Download PDF",
+                    download_pdf_button[current_language],
                     data=pdf_buffer,
                     file_name="pitch_deck.pdf",
                     mime="application/pdf"
                 )
 
         with col2:
-            if st.button("Export as HTML"):
+            if st.button(export_html_button[current_language]):
                 if st.session_state.project_state.html_preview:
                     st.download_button(
-                        "Download HTML",
+                        download_html_button[current_language],
                         st.session_state.project_state.html_preview,
                         file_name="pitch_deck.html",
                         mime="text/html"
                     )
 
         with col3:
-            if st.button("Export to Google Slides"):
+            if st.button(export_google_slides_button[current_language]):
                 # Trigger the Google Slides export function
                 export_to_google_slides(st.session_state.project_state.slides)
-                st.success("Pitch deck exported to Google Slides successfully!")
-            st.success("HTML file downloaded successfully!")
+                st.success(export_success_text[current_language])
+            st.success(html_download_success_text[current_language])
 
     except Exception as e:
         st.error(f"Error generating preview: {str(e)}")
@@ -1252,14 +1323,24 @@ def export_to_google_slides(slides):
 
 
 def main():
-
     if 'initialized' not in st.session_state:
         st.session_state.initialized = False
 
-
     if 'current_project_id' not in st.session_state or not st.session_state.current_project_id:
-        st.title("Welcome to Pitch Deck Generator")
-        project_name = st.text_input("Enter your project name:")
+        # Language-specific welcome message
+        welcome_message = {
+            "en": "Welcome to Pitch Deck Generator",
+            "no": "Velkommen til Pitch Deck Generator"
+        }
+        st.title(welcome_message[current_language])
+
+        # Language-specific project name prompt
+        project_name_prompt = {
+            "en": "Enter your project name:",
+            "no": "Skriv inn prosjektnavnet ditt:"
+        }
+        project_name = st.text_input(project_name_prompt[current_language])
+        
         if project_name:
             st.session_state.current_project_id = str(uuid.uuid4())
             st.session_state.project_name = project_name
@@ -1269,13 +1350,10 @@ def main():
 
     load_css()
 
-
     if not st.session_state.initialized:
-
         if 'vector_store' not in st.session_state:
             api_key = os.getenv('PINECONE_API_KEY')
             environment = "gcp-starter"
-
 
             def log_function(action: str, details: str, error: bool = False):
                 if error:
@@ -1289,13 +1367,11 @@ def main():
                 log_function=log_function
             )
 
-
         if 'project_state' not in st.session_state:
             st.session_state.project_state = ProjectState(
                 st.session_state.current_project_id,
                 st.session_state.vector_store
             )
-
             st.session_state.project_state.load_state()
 
         session_vars = {
@@ -1321,43 +1397,44 @@ def main():
             }
         }
 
-
         for var, value in session_vars.items():
             if var not in st.session_state:
                 st.session_state[var] = value
 
         st.session_state.initialized = True
 
-
     app = PitchDeckGenerator()
-
-
-
-
-
 
     st.sidebar.title("Pitch Deck Generator")
 
+    # Language-specific project label
+    project_label = {
+        "en": "Project",
+        "no": "Prosjekt"
+    }
+    st.sidebar.markdown(f"### {project_label[current_language]}: {st.session_state.project_name}")
 
-    st.sidebar.markdown(f"### Project: {st.session_state.project_name}")
-
-
+    # Language selector
     st.sidebar.markdown("### Language")
     selected_language = st.sidebar.selectbox(
         "Select Language",
         options=list(LANGUAGE_CONFIGS.keys()),
         format_func=lambda x: LANGUAGE_CONFIGS[x]['name'],
-        index=list(LANGUAGE_CONFIGS.keys()).index(st.session_state.current_language)
+        index=list(LANGUAGE_CONFIGS.keys()).index(current_language)
     )
 
-    if selected_language != st.session_state.current_language:
+    if selected_language != current_language:
         st.session_state.current_language = selected_language
         st.session_state.project_state.current_language = selected_language
         st.session_state.project_state.save_state()
         st.rerun()
 
-
-    st.sidebar.markdown("### Editing Mode")
+    # Language-specific editing mode label
+    editing_mode_label = {
+        "en": "Editing Mode",
+        "no": "Redigeringsmodus"
+    }
+    st.sidebar.markdown(f"### {editing_mode_label[current_language]}")
     editing_mode = st.sidebar.radio(
         "Select editing mode",
         options=list(EDITING_MODES.keys()),
@@ -1368,33 +1445,46 @@ def main():
         st.session_state.editing_mode = editing_mode
         st.rerun()
 
-
     if st.session_state.project_state and hasattr(st.session_state.project_state, 'current_phase'):
-        st.sidebar.markdown("### Progress")
+        # Language-specific progress label
+        progress_label = {
+            "en": "Progress",
+            "no": "Fremdrift"
+        }
+        st.sidebar.markdown(f"### {progress_label[current_language]}")
         progress = st.sidebar.progress(0)
         current_phase = st.session_state.project_state.current_phase
-        total_phases = len(PHASE_NAMES)
+        total_phases = len(get_phase_names(current_language))
         progress.progress(current_phase / total_phases)
-        st.sidebar.markdown(f"**Current Phase:** {PHASE_NAMES[current_phase]}")
 
+        phase_names = get_phase_names(current_language)
+        st.sidebar.markdown(f"**Current Phase:** {phase_names[current_phase]}")
 
-    if st.sidebar.checkbox("Show Console Output", value=False):
-        st.sidebar.markdown("### Console Output")
+    # Language-specific console output label
+    console_output_label = {
+        "en": "Console Output",
+        "no": "Konsollutdata"
+    }
+    if st.sidebar.checkbox(console_output_label[current_language], value=False):
+        st.sidebar.markdown(f"### {console_output_label[current_language]}")
         if 'logger' in st.session_state and st.session_state.logger:
             for log in reversed(st.session_state.logger[-10:]):
                 st.sidebar.text(log)
         else:
             st.sidebar.text("No console output available")
 
-
-    st.sidebar.markdown("### Navigation")
+    # Language-specific navigation label
+    navigation_label = {
+        "en": "Navigation",
+        "no": "Navigasjon"
+    }
+    st.sidebar.markdown(f"### {navigation_label[current_language]}")
     selected_tab = st.sidebar.radio(
         "Select Section",
         ["Documents", "Slides", "Preview", "Export"],
         key="navigation",
         index=["Documents", "Slides", "Preview", "Export"].index(st.session_state.active_tab)
     )
-
 
     if selected_tab == "Documents":
         handle_documents_tab()
@@ -1408,7 +1498,46 @@ def main():
 
 def handle_documents_tab():
     """Handle Documents tab content"""
-    st.header("Upload Documents")
+    # Access the current language from session state
+    current_language = st.session_state.current_language
+
+    # Define language-specific text
+    header_text = {
+        "en": "Upload Documents",
+        "no": "Last opp dokumenter"
+    }
+
+    upload_prompt = {
+        "en": "Upload company documents",
+        "no": "Last opp selskapsdokumenter"
+    }
+
+    processing_message = {
+        "en": "Processing documents...",
+        "no": "Behandler dokumenter..."
+    }
+
+    processed_message = {
+        "en": "Documents processed:",
+        "no": "Dokumenter behandlet:"
+    }
+
+    complete_upload_button = {
+        "en": "Complete Document Upload",
+        "no": "Fullfør dokumentopplasting"
+    }
+
+    upload_more_button = {
+        "en": "Upload More Documents",
+        "no": "Last opp flere dokumenter"
+    }
+
+    move_to_slides_message = {
+        "en": "Moving to Slides section...",
+        "no": "Går til lysbilde-seksjonen..."
+    }
+
+    st.header(header_text[current_language])
 
     # Initialize upload state if needed
     if 'upload_state' not in st.session_state:
@@ -1420,7 +1549,7 @@ def handle_documents_tab():
     # Now we can safely access current_phase
     if not st.session_state.upload_state['processing_complete']:
         uploaded_files = st.file_uploader(
-            "Upload company documents",
+            upload_prompt[current_language],
             accept_multiple_files=True,
             type=['txt', 'pdf', 'doc', 'docx'],
             key="document_uploader"
@@ -1433,7 +1562,7 @@ def handle_documents_tab():
             if new_files:
                 progress_container = st.empty()
                 with progress_container.container():
-                    with st.spinner("Processing documents..."):
+                    with st.spinner(processing_message[current_language]):
                         for file in new_files:
                             try:
                                 if handle_document_upload(file):
@@ -1444,27 +1573,26 @@ def handle_documents_tab():
 
         # Display processed files
         if st.session_state.upload_state['files_processed']:
-            st.success("🎉 Documents processed:")
+            st.success(f"🎉 {processed_message[current_language]}")
             for file_name in st.session_state.upload_state['files_processed']:
                 st.write(f"✅ {file_name}")
 
-            if st.button("Complete Document Upload", type="primary"):
+            if st.button(complete_upload_button[current_language], type="primary"):
                 st.session_state.upload_state['processing_complete'] = True
                 st.session_state.project_state.current_phase = 1  # Set to Slide Planning phase
                 st.session_state.project_state.save_state()
-                st.success("Moving to Slides section...")
+                st.success(move_to_slides_message[current_language])
                 st.session_state.active_tab = "Slides"
                 st.rerun()
     else:
         # Show completed state
-        st.success("🎉 Documents have been processed!")
+        st.success(f"🎉 {processed_message[current_language]}")
         for file_name in st.session_state.upload_state['files_processed']:
             st.write(f"✅ {file_name}")
 
-        if st.button("Upload More Documents"):
+        if st.button(upload_more_button[current_language]):
             st.session_state.upload_state['processing_complete'] = False
             st.rerun()
-
 
 
 
@@ -1589,10 +1717,34 @@ def display_slide_content(slide_type: str, content: str):
 
 def handle_document_upload(uploaded_file):
     """Handle document upload with proper tracking"""
+    # Access the current language from session state
+    current_language = st.session_state.current_language
+
+    # Define language-specific messages
+    extraction_failure_message = {
+        "en": f"Failed to extract content from {uploaded_file.name}",
+        "no": f"Kunne ikke hente innhold fra {uploaded_file.name}"
+    }
+
+    upload_success_message = {
+        "en": f"Successfully uploaded {uploaded_file.name}",
+        "no": f"Vellykket opplasting av {uploaded_file.name}"
+    }
+
+    store_failure_message = {
+        "en": f"Failed to store {uploaded_file.name}",
+        "no": f"Kunne ikke lagre {uploaded_file.name}"
+    }
+
+    error_processing_message = {
+        "en": "Error processing upload",
+        "no": "Feil ved behandling av opplasting"
+    }
+
     try:
         content = st.session_state.vector_store._extract_content(uploaded_file)
         if not content:
-            st.error(f"Failed to extract content from {uploaded_file.name}")
+            st.error(extraction_failure_message[current_language])
             return False
 
         # Prepare metadata
@@ -1610,14 +1762,14 @@ def handle_document_upload(uploaded_file):
         )
 
         if success:
-            st.success(f"Successfully uploaded {uploaded_file.name}")
+            st.success(upload_success_message[current_language])
             return True
         else:
-            st.error(f"Failed to store {uploaded_file.name}")
+            st.error(store_failure_message[current_language])
             return False
 
     except Exception as e:
-        st.error(f"Error processing upload: {str(e)}")
+        st.error(f"{error_processing_message[current_language]}: {str(e)}")
         return False
 
 
@@ -1645,9 +1797,63 @@ def verify_project_state():
 
 def handle_slides_tab():
     """Handle Slides tab content"""
-    st.header("Create Your Pitch Deck")
+    # Access the current language from session state
+    current_language = st.session_state.current_language
 
-    if st.checkbox("Show Debug Info"):
+    # Define language-specific text
+    header_text = {
+        "en": "Create Your Pitch Deck",
+        "no": "Lag din presentasjon"
+    }
+
+    debug_info_text = {
+        "en": "Show Debug Info",
+        "no": "Vis feilsøkingsinformasjon"
+    }
+
+    document_analysis_prompt = {
+        "en": "Please complete the document analysis phase first.",
+        "no": "Vennligst fullfør dokumentanalysen først."
+    }
+
+    go_to_documents_button = {
+        "en": "Go to Documents Section",
+        "no": "Gå til dokumentseksjonen"
+    }
+
+    select_slides_subheader = {
+        "en": "Select Slides to Include",
+        "no": "Velg lysbilder som skal inkluderes"
+    }
+
+    required_slides_header = {
+        "en": "Required Slides",
+        "no": "Obligatoriske lysbilder"
+    }
+
+    optional_slides_header = {
+        "en": "Optional Slides",
+        "no": "Valgfrie lysbilder"
+    }
+
+    confirm_selection_button = {
+        "en": "Confirm Slide Selection",
+        "no": "Bekreft lysbildevalg"
+    }
+
+    modify_selection_button = {
+        "en": "Modify Slide Selection",
+        "no": "Endre lysbildevalg"
+    }
+
+    go_to_preview_button = {
+        "en": "Go to Preview",
+        "no": "Gå til forhåndsvisning"
+    }
+
+    st.header(header_text[current_language])
+
+    if st.checkbox(debug_info_text[current_language]):
         st.write("Session State:", {
             k: v for k, v in st.session_state.items()
             if k not in ['openai_client', 'vector_store']
@@ -1656,19 +1862,16 @@ def handle_slides_tab():
         st.write("Slides Present:", bool(st.session_state.project_state.slides))
 
     if not st.session_state.upload_state.get('processing_complete', False):
-        st.info("Please complete the document analysis phase first.")
-        if st.button("Go to Documents Section"):
+        st.info(document_analysis_prompt[current_language])
+        if st.button(go_to_documents_button[current_language]):
             st.session_state.active_tab = "Documents"
             st.rerun()
         return
 
-
     if 'selected_slides' not in st.session_state:
-        st.subheader("Select Slides to Include")
+        st.subheader(select_slides_subheader[current_language])
 
-        selected_language = st.session_state.current_language
-
-        st.markdown("#### Required Slides")
+        st.markdown(f"#### {required_slides_header[current_language]}")
         required_slides_english = {
             "title": "Title Slide",
             "introduction": "Introduction",
@@ -1686,24 +1889,14 @@ def handle_slides_tab():
             "market": "Markedmuligheter",
             "ask": "Forespørsel",
         }
-        selected_language = st.session_state.current_language
 
         # Set the slide names based on the selected language
-        if selected_language == "en":
-            required_slides = required_slides_english
-
-        elif selected_language == "no":
-            required_slides = required_slides_norwegian
-
-        else:
-            # Default to English if no match
-            required_slides = required_slides_english
+        required_slides = required_slides_english if current_language == "en" else required_slides_norwegian
 
         for slide_type, slide_name in required_slides.items():
             st.checkbox(slide_name, value=True, disabled=True, key=f"req_{slide_type}")
 
-
-        st.markdown("#### Optional Slides")
+        st.markdown(f"#### {optional_slides_header[current_language]}")
         optional_slides_english = {
             "team": "Meet the Team",
             "experience": "Our Experience with the Problem",
@@ -1735,18 +1928,9 @@ def handle_slides_tab():
             "financials": "Finansiell Oversikt",
             "use_of_funds": "Bruk av Midler"
         }
-        selected_language = st.session_state.current_language
 
         # Set the slide names based on the selected language
-        if selected_language == "en":
-
-            optional_slides = optional_slides_english
-        elif selected_language == "no":
-
-            optional_slides = optional_slides_norwegian
-        else:
-
-            optional_slides = optional_slides_norwegian
+        optional_slides = optional_slides_english if current_language == "en" else optional_slides_norwegian
 
         selected_optional = {}
         col1, col2 = st.columns(2)
@@ -1758,7 +1942,7 @@ def handle_slides_tab():
                 selected_optional[slide_type] = st.checkbox(slide_name, value=False, key=f"opt_{slide_type}")
 
         # Confirm selection button
-        if st.button("Confirm Slide Selection"):
+        if st.button(confirm_selection_button[current_language]):
             # Combine required and selected optional slides
             st.session_state.selected_slides = {
                 **{k: True for k in required_slides.keys()},
@@ -1814,23 +1998,21 @@ def handle_slides_tab():
                     # Update status in the slide's container
                     slide_containers[slide_type].info(f"Generating {slide_config['name']}...")
 
-                    # Simply send the document content and slide type
                     # Define the content for each language
                     message_content_english = f"""
                     Create a **{slide_config['name']}** slide for a pitch deck using the provided company documents and the following detailed instructions.
 
-                    ---
+                    --- 
 
                     ### Slide Objective
-                    Summarize the **{slide_config['name']}** slide in clear, concise bullet points that are ready for presentation. Focus on informative language, directly addressing the company’s context and goals without introductory phrases.
+                    Summarize the **{slide_config['name']}** slide in clear, concise bullet points that are ready for presentation. Focus on informative language, directly addressing the company's context and goals without introductory phrases.
 
                     ### Content Guidelines:
                     * Use bullet points to clearly present key information.
-                    * Aim for precision and relevance to the company’s objectives.
-                    
+                    * Aim for precision and relevance to the company's objectives.
                     * Include a minimum of three bullet points.
 
-                    ---
+                    --- 
 
                     ### Documented Content:
                     {doc_content}
@@ -1842,55 +2024,46 @@ def handle_slides_tab():
                     * Formal and professional.
                     * Engaging, easy to understand, and well-aligned with company goals.
 
-                    ---
+                    --- 
 
                     ### Prompt for Content Creation:
                     {slide_config['prompt']}
 
-                    ---
+                    --- 
 
                     Directly output the slide content below without additional instructions.
                     """
 
                     message_content_norwegian = f"""
-                                        Svar på norsk. Svar kun med punktlister, og unngå introduksjonstekster og forklaringer.
+                    Svar på norsk. Svar kun med punktlister, og unngå introduksjonstekster og forklaringer.
 
-                                        Lag en **{slide_config['name']}** for en presentasjon med utgangspunkt i selskapets dokumenter og følgende detaljerte instruksjoner.
+                    Lag en **{slide_config['name']}** for en presentasjon med utgangspunkt i selskapets dokumenter og følgende detaljerte instruksjoner.
 
-                                        ### Mål for lysbilde
-                                        Gi kun klare, konsise punkter for presentasjon. Unngå introduksjonsfraser eller kommentarer.
+                    ### Mål for lysbilde
+                    Gi kun klare, konsise punkter for presentasjon. Unngå introduksjonsfraser eller kommentarer.
 
-                                        ### Innholdskrav:
-                                        * Bruk punktlister for å presentere nøkkelinformasjon.
-                                        * Fokuser på presisjon og relevans for selskapets mål.
-                                        * Hvert punkt skal være under 13 ord.
-                                        * Inkluder minst tre punkter.
+                    ### Innholdskrav:
+                    * Bruk punktlister for å presentere nøkkelinformasjon.
+                    * Fokuser på presisjon og relevans for selskapets mål.
+                    * Hvert punkt skal være under 13 ord.
+                    * Inkluder minst tre punkter.
 
-                                        ### Dokumentert innhold:
-                                        {doc_content}
+                    ### Dokumentert innhold:
+                    {doc_content}
 
-                                        ### Nødvendige elementer:
-                                        * {', '.join(slide_config['required_elements'])}
+                    ### Nødvendige elementer:
+                    * {', '.join(slide_config['required_elements'])}
 
-                                        ### Tone og stil:
-                                        * Formelt og profesjonelt.
-                                        * Engasjerende og lett å forstå.
+                    ### Tone og stil:
+                    * Formelt og profesjonelt.
+                    * Engasjerende og lett å forstå.
 
-                                        ### Prompt for innhold:
-                                        {slide_config['prompt']}
-                                        """
+                    ### Prompt for innhold:
+                    {slide_config['prompt']}
+                    """
 
-                    # Now access current_language from the instance
-                    selected_language = st.session_state.project_state.current_language
-
-
-                    if selected_language == "en":
-                        message_content = message_content_english
-                    elif selected_language == "no":
-                        message_content = message_content_norwegian
-                    else:
-                        message_content = message_content_norwegian  # Default to Norwegian if no match
-
+                    # Select the appropriate message content based on the current language
+                    message_content = message_content_english if current_language == "en" else message_content_norwegian
 
                     # Send the message content
                     st.session_state.openai_client.beta.threads.messages.create(
@@ -1903,7 +2076,6 @@ def handle_slides_tab():
                         thread_id=st.session_state.thread_id,
                         assistant_id="asst_uCXB3ZuddxaZZeEqPh8LZ5Zf"
                     )
-
 
                     while run.status in ["queued", "in_progress"]:
                         slide_containers[slide_type].info(f"Generating {slide_config['name']}... Status: {run.status}")
@@ -1918,8 +2090,6 @@ def handle_slides_tab():
                             thread_id=st.session_state.thread_id
                         )
 
-
-
                         response = messages.data[0].content[0].text.value
 
                         cleaned_response = clean_slide_content(response)
@@ -1928,15 +2098,11 @@ def handle_slides_tab():
                             st.session_state.raw_responses = {}
                         st.session_state.raw_responses[slide_type] = cleaned_response
 
-
-
                         # Show the raw response
                         slide_containers[slide_type].markdown(f"""
                         `
                         {cleaned_response}
-                      
                         """)
-
 
                         # Parse and save in background
                         slide_content = parse_slide_response(cleaned_response, slide_type)
@@ -1964,16 +2130,17 @@ def handle_slides_tab():
     # Add option to modify slide selection
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Modify Slide Selection"):
+        if st.button(modify_selection_button[current_language]):
             del st.session_state.selected_slides
             if 'project_state' in st.session_state:
                 st.session_state.project_state.slides = {}
             st.rerun()
 
     with col2:
-        if st.button("Go to Preview"):
+        if st.button(go_to_preview_button[current_language]):
             st.session_state.active_tab = "Preview"
             st.rerun()
+
 
 
 
